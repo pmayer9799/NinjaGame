@@ -53,53 +53,53 @@ class NinjaGame
         string lastNameResult = "";
         string firstNameResult = "";
         //create ninja name
-        //while (string.IsNullOrEmpty(lastName) || string.IsNullOrEmpty(firstName))
-        //{
-        //    Console.Write("Enter your last name: ");
-        //    lastName = Console.ReadLine();
+        while (string.IsNullOrEmpty(lastName) || string.IsNullOrEmpty(firstName))
+        {
+            Console.Write("Enter your last name: ");
+            lastName = Console.ReadLine();
 
-        //    Console.Write("Enter your first name: ");
-        //    firstName = Console.ReadLine();
+            Console.Write("Enter your first name: ");
+            firstName = Console.ReadLine();
 
-        //    Console.Clear();
-        //}
+            Console.Clear();
+        }
 
-        ////check if valid name input
-        //if (!IsValidName(lastName) && !IsValidName(firstName))
-        //{
-        //    Console.WriteLine("ERROR: name did not contain letters");
-        //    Environment.Exit(0);
-        //}
+        //check if valid name input
+        if (!IsValidName(lastName) && !IsValidName(firstName))
+        {
+            Console.WriteLine("ERROR: name did not contain letters");
+            Environment.Exit(0);
+        }
 
-        ////now extract first 3 and 4 of names        
-        //lastNameSubString = lastName.Length >= 3 ? lastName.Substring(0, 3) : lastName;
-        //firstNameSubString = firstName.Length >= 4 ? firstName.Substring(0, 4) : firstName;
+        //now extract first 3 and 4 of names        
+        lastNameSubString = lastName.Length >= 3 ? lastName.Substring(0, 3) : lastName;
+        firstNameSubString = firstName.Length >= 4 ? firstName.Substring(0, 4) : firstName;
 
-        //foreach (char c in lastNameSubString)
-        //{
-        //    foreach (KeyValuePair<char, string> key in nameDic)
-        //    {
-        //        if (key.Key == char.ToUpper(c))
-        //        {
-        //            lastNameResult += key.Value;
-        //            break;
-        //        }
-        //    }
-        //}
+        foreach (char c in lastNameSubString)
+        {
+            foreach (KeyValuePair<char, string> key in nameDic)
+            {
+                if (key.Key == char.ToUpper(c))
+                {
+                    lastNameResult += key.Value;
+                    break;
+                }
+            }
+        }
 
-        //foreach (char c in firstNameSubString)
-        //{
-        //    foreach (KeyValuePair<char, string> key in nameDic)
-        //    {
-        //        if (key.Key == char.ToUpper(c))
-        //        {
-        //            firstNameResult += key.Value;
-        //            break;
-        //        }
-        //    }
-        //}
+        foreach (char c in firstNameSubString)
+        {
+            foreach (KeyValuePair<char, string> key in nameDic)
+            {
+                if (key.Key == char.ToUpper(c))
+                {
+                    firstNameResult += key.Value;
+                    break;
+                }
+            }
+        }
 
-        //Console.WriteLine($"Welcome {CapitalizeFirstLetter(lastNameResult)} {CapitalizeFirstLetter(firstNameResult)}!");
+        Console.WriteLine($"Welcome {CapitalizeFirstLetter(lastNameResult)} {CapitalizeFirstLetter(firstNameResult)}!");
 
         try
         {
