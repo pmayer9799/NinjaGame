@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
-internal class Ninja
+public class Ninja
 {
-    public int _ninjaX { get; set; }
-    public int _ninjaY { get; set; }
+    public int NinjaX { get; set; }
+    public int NinjaY { get; set; }
 
     public int _holySymbolCounter { get; set; }
     public int _shurikensOnMap { get; set; }
@@ -18,17 +19,20 @@ internal class Ninja
     public static char _prevDirChange = '\0';
     public static char _currDir = '\0';
     public static char _prevMirror = '\0';
+    public static char _prevBomb = '\0';
     public static bool _isMirrored = false;
     public static bool _inBreakerMode = false;
+    private Bomb bomb;
 
-    public Ninja(int startX, int startY)
+    public Ninja(int startX, int startY, Bomb bomb)
     {
-        _ninjaX = startX;
-        _ninjaY = startY;
+        NinjaX = startX;
+        NinjaY = startY;
         _shurikenCount = 3;//starting limit
+        this.bomb = bomb;
     }
 
-    public bool IsValidMove(int x, int y, char[,] map)
+    private bool IsValidMove(int x, int y, char[,] map)
     {
         if (_inBreakerMode)
         {
@@ -57,12 +61,12 @@ internal class Ninja
             switch (_currDirection)
             {
                 case 0://south
-                    while (IsValidMove(_ninjaX + 1, _ninjaY, map) || (_isMirrored && IsValidMove(_ninjaX, _ninjaY - 1, map)))
+                    while (IsValidMove(NinjaX + 1, NinjaY, map) || (_isMirrored && IsValidMove(NinjaX, NinjaY - 1, map)))
                     {
                         if (_isMirrored)
                         {
                             enteredMirrored = true;
-                            while (IsValidMove(_ninjaX, _ninjaY - 1, map))//west
+                            while (IsValidMove(NinjaX, NinjaY - 1, map))//west
                             {
                                 ThrowShuriken(map);
                                 if (_holySymbolCounter == 0)
@@ -77,10 +81,16 @@ internal class Ninja
                                     throw new Exception("LOOP");
                                 }
 
+                                if (Bomb.IsBomb)//check if there is bomb on map otherwise we dont need to hit this code
+                                {
+                                    bomb.CheckBombAndTriggerCountdown(NinjaX, NinjaY, Bomb.bombDics);//Checks if ninja is next to bomb
+                                    bomb.BombCountDownAndExplode(NinjaX, NinjaY, map);
+                                    NinjaGame.PrintMap();
+                                }
                                 NinjaGame.AddMessage("Mirrored WEST (current direction)");
-                                MovePlayer(_ninjaX, _ninjaY - 1, map);
+                                MoveNinja(NinjaX, NinjaY - 1, map);
 
-                                if (!_isMirrored)//we need to check if we are still mirrored since in the MovePlayer() we can get out of it, if so break out of the mirror
+                                if (!_isMirrored)//we need to check if we are still mirrored since in the MoveNinja() we can get out of it, if so break out of the mirror
                                 {
                                     moved = true;
                                     break;
@@ -104,8 +114,15 @@ internal class Ninja
                             throw new Exception("LOOP");
                         }
 
+                        if (Bomb.IsBomb)//check if there is bomb on map otherwise we dont need to hit this code
+                        {
+                            bomb.CheckBombAndTriggerCountdown(NinjaX, NinjaY, Bomb.bombDics);//Checks if ninja is next to bomb
+                            bomb.BombCountDownAndExplode(NinjaX, NinjaY, map);
+                            NinjaGame.PrintMap();
+                        }
                         NinjaGame.AddMessage("SOUTH (initial direction)");
-                        MovePlayer(_ninjaX + 1, _ninjaY, map);
+                        MoveNinja(NinjaX + 1, NinjaY, map);
+
                         NinjaGame.PrintMap();
                         moved = true;
                     }
@@ -117,13 +134,13 @@ internal class Ninja
 
                     break;
                 case 1://east             
-                    while (IsValidMove(_ninjaX, _ninjaY + 1, map) || (_isMirrored && IsValidMove(_ninjaX - 1, _ninjaY, map)))
+                    while (IsValidMove(NinjaX, NinjaY + 1, map) || (_isMirrored && IsValidMove(NinjaX - 1, NinjaY, map)))
                     {
                         if (_isMirrored)
                         {
                             enteredMirrored = true;
 
-                            while (IsValidMove(_ninjaX - 1, _ninjaY, map))//north
+                            while (IsValidMove(NinjaX - 1, NinjaY, map))//north
                             {
                                 ThrowShuriken(map);
                                 if (_holySymbolCounter == 0)
@@ -138,10 +155,16 @@ internal class Ninja
                                     throw new Exception("LOOP");
                                 }
 
+                                if (Bomb.IsBomb)//check if there is bomb on map otherwise we dont need to hit this code
+                                {
+                                    bomb.CheckBombAndTriggerCountdown(NinjaX, NinjaY, Bomb.bombDics);//Checks if ninja is next to bomb
+                                    bomb.BombCountDownAndExplode(NinjaX, NinjaY, map);
+                                    NinjaGame.PrintMap();
+                                }
                                 NinjaGame.AddMessage("Mirrored NORTH (current direction)");
-                                MovePlayer(_ninjaX - 1, _ninjaY, map);
+                                MoveNinja(NinjaX - 1, NinjaY, map);
 
-                                if (!_isMirrored)//we need to check if we are still mirrored since in the MovePlayer() we can get out of it, if so break out of the mirror
+                                if (!_isMirrored)//we need to check if we are still mirrored since in the MoveNinja() we can get out of it, if so break out of the mirror
                                 {
                                     moved = true;
                                     break;
@@ -165,8 +188,15 @@ internal class Ninja
                             throw new Exception("LOOP");
                         }
 
+                        if (Bomb.IsBomb)//check if there is bomb on map otherwise we dont need to hit this code
+                        {
+                            bomb.CheckBombAndTriggerCountdown(NinjaX, NinjaY, Bomb.bombDics);//Checks if ninja is next to bomb
+                            bomb.BombCountDownAndExplode(NinjaX, NinjaY, map);
+                            NinjaGame.PrintMap();
+                        }
                         NinjaGame.AddMessage("EAST (current direction)");
-                        MovePlayer(_ninjaX, _ninjaY + 1, map);
+                        MoveNinja(NinjaX, NinjaY + 1, map);
+
                         NinjaGame.PrintMap();
                         moved = true;
                     }
@@ -178,13 +208,13 @@ internal class Ninja
 
                     break;
                 case 2://north
-                    while (IsValidMove(_ninjaX - 1, _ninjaY, map) || (_isMirrored && IsValidMove(_ninjaX, _ninjaY + 1, map)))
+                    while (IsValidMove(NinjaX - 1, NinjaY, map) || (_isMirrored && IsValidMove(NinjaX, NinjaY + 1, map)))
                     {
                         if (_isMirrored)
                         {
                             enteredMirrored = true;
 
-                            while (IsValidMove(_ninjaX, _ninjaY + 1, map))//east
+                            while (IsValidMove(NinjaX, NinjaY + 1, map))//east
                             {
                                 ThrowShuriken(map);
                                 if (_holySymbolCounter == 0)
@@ -199,10 +229,17 @@ internal class Ninja
                                     throw new Exception("LOOP");
                                 }
 
-                                NinjaGame.AddMessage("Mirrored EAST (current direction)");
-                                MovePlayer(_ninjaX, _ninjaY + 1, map);
+                                if (Bomb.IsBomb)//check if there is bomb on map otherwise we dont need to hit this code
+                                {
+                                    bomb.CheckBombAndTriggerCountdown(NinjaX, NinjaY, Bomb.bombDics);//Checks if ninja is next to bomb
+                                    bomb.BombCountDownAndExplode(NinjaX, NinjaY, map);
+                                    NinjaGame.PrintMap();
+                                }
 
-                                if (!_isMirrored)//we need to check if we are still mirrored since in the MovePlayer() we can get out of it, if so break out of the mirror
+                                NinjaGame.AddMessage("Mirrored EAST (current direction)");
+                                MoveNinja(NinjaX, NinjaY + 1, map);
+
+                                if (!_isMirrored)//we need to check if we are still mirrored since in the MoveNinja() we can get out of it, if so break out of the mirror
                                 {
                                     moved = true;
                                     break;
@@ -226,8 +263,16 @@ internal class Ninja
                             throw new Exception("LOOP");
                         }
 
+                        if (Bomb.IsBomb)//check if there is bomb on map otherwise we dont need to hit this code
+                        {
+                            bomb.CheckBombAndTriggerCountdown(NinjaX, NinjaY, Bomb.bombDics);//Checks if ninja is next to bomb
+                            bomb.BombCountDownAndExplode(NinjaX, NinjaY, map);
+                            NinjaGame.PrintMap();
+                        }
+
                         NinjaGame.AddMessage("NORTH (current direction)");
-                        MovePlayer(_ninjaX - 1, _ninjaY, map);
+                        MoveNinja(NinjaX - 1, NinjaY, map);
+
                         NinjaGame.PrintMap();
                         moved = true;
                     }
@@ -238,13 +283,13 @@ internal class Ninja
 
                     break;
                 case 3://west
-                    while (IsValidMove(_ninjaX, _ninjaY - 1, map) || (_isMirrored && IsValidMove(_ninjaX + 1, _ninjaY, map)))
+                    while (IsValidMove(NinjaX, NinjaY - 1, map) || (_isMirrored && IsValidMove(NinjaX + 1, NinjaY, map)))
                     {
                         if (_isMirrored)
                         {
                             enteredMirrored = true;
 
-                            while (IsValidMove(_ninjaX + 1, _ninjaY, map))//south
+                            while (IsValidMove(NinjaX + 1, NinjaY, map))//south
                             {
                                 ThrowShuriken(map);
                                 if (_holySymbolCounter == 0)
@@ -259,10 +304,16 @@ internal class Ninja
                                     throw new Exception("LOOP");
                                 }
 
+                                if (Bomb.IsBomb)//check if there is bomb on map otherwise we dont need to hit this code
+                                {
+                                    bomb.CheckBombAndTriggerCountdown(NinjaX, NinjaY, Bomb.bombDics);//Checks if ninja is next to bomb
+                                    bomb.BombCountDownAndExplode(NinjaX, NinjaY, map);
+                                    NinjaGame.PrintMap();
+                                }
                                 NinjaGame.AddMessage("Mirrored SOUTH (current direction)");
-                                MovePlayer(_ninjaX + 1, _ninjaY, map);
+                                MoveNinja(NinjaX + 1, NinjaY, map);
 
-                                if (!_isMirrored)//we need to check if we are still mirrored since in the MovePlayer() we can get out of it, if so break out of the mirror
+                                if (!_isMirrored)//we need to check if we are still mirrored since in the MoveNinja() we can get out of it, if so break out of the mirror
                                 {
                                     moved = true;
                                     break;
@@ -286,8 +337,16 @@ internal class Ninja
                             throw new Exception("LOOP");
                         }
 
+                        if (Bomb.IsBomb)//check if there is bomb on map otherwise we dont need to hit this code
+                        {
+                            bomb.CheckBombAndTriggerCountdown(NinjaX, NinjaY, Bomb.bombDics);//Checks if ninja is next to bomb
+                            bomb.BombCountDownAndExplode(NinjaX, NinjaY, map);
+                            NinjaGame.PrintMap();
+                        }
+
                         NinjaGame.AddMessage("WEST (current direction)");
-                        MovePlayer(_ninjaX, _ninjaY - 1, map);
+                        MoveNinja(NinjaX, NinjaY - 1, map);
+
                         NinjaGame.PrintMap();
                         moved = true;
                     }
@@ -302,7 +361,7 @@ internal class Ninja
         }        
     }
 
-    public void MovePlayer(int newX, int newY, char[,] map)
+    private void MoveNinja(int newX, int newY, char[,] map)
     {
         switch (map[newX, newY])
         {
@@ -348,33 +407,20 @@ internal class Ninja
             case 'B':
                 BreakerMode(newX, newY, map);
                 break;
+            case >= '0' and <= '9':
+                BombLocation(newX, newY, map);
+                break;
             default:
-                // Replace the player's old position with a space if there was no secret path
-                if (_prevSecretPath != '\0')
-                {
-                    map[_ninjaX, _ninjaY] = _prevSecretPath;
-                    _prevSecretPath = '\0';
-                }
-                else if (_prevDirChange != '\0') //Replace the direction position
-                {
-                    map[_ninjaX, _ninjaY] = _prevDirChange;
-                    _prevDirChange = '\0';
-                }
-                else if (_prevMirror != '\0') //Replace the direction position
-                {
-                    map[_ninjaX, _ninjaY] = _prevMirror;
-                    _prevMirror = '\0';
-                }
-                else
-                    map[_ninjaX, _ninjaY] = ' ';
+                
+                ClearOutPreviousPositions(map);//This will ensure that the positions of certain obstacles do not get wiped out
 
-                //Update player position
-                _ninjaX = newX;
-                _ninjaY = newY;
-                // Place the player in the new position
-                map[_ninjaX, _ninjaY] = '@';
+                //Update ninja position
+                NinjaX = newX;
+                NinjaY = newY;
+                // Place the ninja in the new position
+                map[NinjaX, NinjaY] = '@';
                 NinjaGame.PrintMap();
-                NinjaGame.TrackPosition(_ninjaX, _ninjaY);
+                NinjaGame.TrackPosition(NinjaX, NinjaY);
 
                 if (NinjaGame.LoopingCheck())
                 {
@@ -385,26 +431,16 @@ internal class Ninja
         }
     }
 
-    public void CollectShuriken(int newX, int newY, char[,] map)
+    private void CollectShuriken(int newX, int newY, char[,] map)
     {
         _shurikenCount++;
         NinjaGame.AddMessage("Picks up shuriken");
-        if (_prevDirChange != '\0')
-        {
-            map[_ninjaX, _ninjaY] = _prevDirChange;
-            _prevDirChange = '\0';
-        }
-        else if (_prevSecretPath != '\0')
-        {
-            map[_ninjaX, _ninjaY] = _prevSecretPath;
-            _prevSecretPath = '\0';
-        }
-        else
-            map[_ninjaX, _ninjaY] = ' ';
 
-        _ninjaX = newX;
-        _ninjaY = newY;
-        map[_ninjaX, _ninjaY] = '@';
+        ClearOutPreviousPositions(map);
+
+        NinjaX = newX;
+        NinjaY = newY;
+        map[NinjaX, NinjaY] = '@';
     }
 
     public void ThrowShuriken(char[,] map)
@@ -414,100 +450,100 @@ internal class Ninja
         if (_shurikenCount >= 1)
         {
             // 1. Check downwards on the same column
-            for (int i = _ninjaX + 1; i < map.GetLength(0); i++)
+            for (int i = NinjaX + 1; i < map.GetLength(0); i++)
             {
-                if ((map[i, _ninjaY] == '$' || map[i, _ninjaY] == 'X') && _shurikenCount >= 1)
+                if ((map[i, NinjaY] == '$' || map[i, NinjaY] == 'X') && _shurikenCount >= 1)
                 {
-                    if (map[i, _ninjaY] == 'X')
+                    if (map[i, NinjaY] == 'X')
                     {
-                        map[i, _ninjaY] = '*';
+                        map[i, NinjaY] = '*';
                         _shurikenCount--;//decrease count if we hit a obstacle/symbol
                         NinjaGame.AddMessage("THROW (hit the X symbol downwards)");
                     }
                     else
                     {
-                        map[i, _ninjaY] = ' '; // Remove $
+                        map[i, NinjaY] = ' '; // Remove $
                         _shurikenCount--;//decrease count if we hit a obstacle/symbol
                         NinjaGame.AddMessage("THROW (hit the $ symbol downwards)");
                         _holySymbolCounter--;//decrease count of $ if 0 the ninja has won
                     }
                 }
-                else if (map[i, _ninjaY] == '#')
+                else if (map[i, NinjaY] == '#')
                     break; // Hit a wall, stop
             }
 
             // 2. Check rightwards on the same row
-            for (int j = _ninjaY + 1; j < map.GetLength(1); j++)
+            for (int j = NinjaY + 1; j < map.GetLength(1); j++)
             {
-                if ((map[_ninjaX, j] == '$' || map[_ninjaX, j] == 'X') && _shurikenCount >= 1)
+                if ((map[NinjaX, j] == '$' || map[NinjaX, j] == 'X') && _shurikenCount >= 1)
                 {
-                    if (map[_ninjaX, j] == 'X')
+                    if (map[NinjaX, j] == 'X')
                     {
-                        map[_ninjaX, j] = '*';
+                        map[NinjaX, j] = '*';
                         _shurikenCount--;//decrease count if we hit a obstacle/symbol
                         NinjaGame.AddMessage("THROW (hit the X symbol rightwards)");
                     }
                     else
                     {
-                        map[_ninjaX, j] = ' ';//Remove $
+                        map[NinjaX, j] = ' ';//Remove $
                         _shurikenCount--;//decrease count if we hit a obstacle/symbol
                         NinjaGame.AddMessage("THROW (hit the $ symbol rightwards)");
                         _holySymbolCounter--;
                     }
                 }
-                else if (map[_ninjaX, j] == '#')
+                else if (map[NinjaX, j] == '#')
                     break; // Hit a wall, stop
             }
 
             // 3. Check upwards on the same column
-            for (int i = _ninjaX - 1; i >= 0; i--)
+            for (int i = NinjaX - 1; i >= 0; i--)
             {
-                if ((map[i, _ninjaY] == '$' || map[i, _ninjaY] == 'X') && _shurikenCount >= 1)
+                if ((map[i, NinjaY] == '$' || map[i, NinjaY] == 'X') && _shurikenCount >= 1)
                 {
-                    if (map[i, _ninjaY] == 'X')
+                    if (map[i, NinjaY] == 'X')
                     {
-                        map[i, _ninjaY] = '*';
+                        map[i, NinjaY] = '*';
                         _shurikenCount--;//decrease count if we hit a obstacle/symbol
                         NinjaGame.AddMessage("THROW (hit the X symbol upwards)");
                     }
                     else
                     {
-                        map[i, _ninjaY] = ' '; // Remove $
+                        map[i, NinjaY] = ' '; // Remove $
                         _shurikenCount--;//decrease count if we hit a obstacle/symbol
                         NinjaGame.AddMessage("THROW (hit the $ symbol upwards)");
                         _holySymbolCounter--;
                     }
                 }
-                else if (map[i, _ninjaY] == '#')
+                else if (map[i, NinjaY] == '#')
                     break; // Hit a wall, stop
             }
 
             // 4. Check leftwards on the same row
-            for (int j = _ninjaY - 1; j >= 0; j--)
+            for (int j = NinjaY - 1; j >= 0; j--)
             {
-                if ((map[_ninjaX, j] == '$' || map[_ninjaX, j] == 'X') && _shurikenCount >= 1)
+                if ((map[NinjaX, j] == '$' || map[NinjaX, j] == 'X') && _shurikenCount >= 1)
                 {
-                    if (map[_ninjaX, j] == 'X')
+                    if (map[NinjaX, j] == 'X')
                     {
-                        map[_ninjaX, j] = '*';
+                        map[NinjaX, j] = '*';
                         _shurikenCount--;//decrease count if we hit a obstacle/symbol
                         NinjaGame.AddMessage("THROW (hit the X symbol leftwards)");
                     }
                     else
                     {
-                        map[_ninjaX, j] = ' '; // Remove $
+                        map[NinjaX, j] = ' '; // Remove $
                         _shurikenCount--;//decrease count if we hit a obstacle/symbol
                         NinjaGame.AddMessage("THROW (hit the $ symbol leftwards)");
                         _holySymbolCounter--;
                     }
                 }
-                else if (map[_ninjaX, j] == '#')
+                else if (map[NinjaX, j] == '#')
                     break; // Hit a wall, stop
             }
         }
     }
 
-    public void MoveWest(int currX, int currY, char[,] map)
+    private void MoveWest(int currX, int currY, char[,] map)
     {
         for (int i = 0; i < map.GetLength(0); i++)
         {
@@ -517,16 +553,14 @@ internal class Ninja
                 {
                     _currDir = 'W';
 
-                    if (_prevDirChange != '\0')// need to check if prevDirChange was not empty. we want to make sure to keep the original position
-                        map[_ninjaX, _ninjaY] = _prevDirChange;
-                    else
-                        map[_ninjaX, _ninjaY] = ' '; // Clear old position
-                    _prevDirChange = map[i, j];
-                    _ninjaX = i; // Update player's X position
-                    _ninjaY = j; // Update player's Y position
-                    map[_ninjaX, _ninjaY] = '@'; // Set new position
+                    ClearOutPreviousPositions(map);
 
-                    NinjaGame.TrackPosition(_ninjaX, _ninjaY);
+                    _prevDirChange = map[i, j];
+                    NinjaX = i; // Update ninja's X position
+                    NinjaY = j; // Update ninja's Y position
+                    map[NinjaX, NinjaY] = '@'; // Set new position
+
+                    NinjaGame.TrackPosition(NinjaX, NinjaY);
 
                     ThrowShuriken(map);
                     if (_holySymbolCounter == 0)
@@ -541,9 +575,16 @@ internal class Ninja
                         throw new Exception("LOOP");
                     }
 
-                    while (IsValidMove(_ninjaX, _ninjaY - 1, map))
+                    while (IsValidMove(NinjaX, NinjaY - 1, map))
                     {
-                        MovePlayer(_ninjaX, _ninjaY - 1, map);
+                        if (Bomb.IsBomb)//check if there is bomb on map otherwise we dont need to hit this code
+                        {
+                            bomb.CheckBombAndTriggerCountdown(NinjaX, NinjaY, Bomb.bombDics);//Checks if ninja is next to bomb
+                            bomb.BombCountDownAndExplode(NinjaX, NinjaY, map);
+                            NinjaGame.PrintMap();
+                        }
+
+                        MoveNinja(NinjaX, NinjaY - 1, map);
                         NinjaGame.PrintMap();
 
                         if (_currDir != 'W')
@@ -559,7 +600,7 @@ internal class Ninja
         }
     }
 
-    public void MoveEast(int currX, int currY, char[,] map)
+    private void MoveEast(int currX, int currY, char[,] map)
     {
         for (int i = 0; i < map.GetLength(0); i++)
         {
@@ -569,17 +610,14 @@ internal class Ninja
                 {
                     _currDir = 'E';
 
-                    if (_prevDirChange != '\0')// need to check if prevDirChange was not empty. we want to make sure to keep the original position
-                        map[_ninjaX, _ninjaY] = _prevDirChange;
-                    else
-                        map[_ninjaX, _ninjaY] = ' '; // Clear old position
+                    ClearOutPreviousPositions(map);
 
                     _prevDirChange = map[i, j];
-                    _ninjaX = i; // Update player's X position
-                    _ninjaY = j; // Update player's Y position
-                    map[_ninjaX, _ninjaY] = '@'; // Set new position
+                    NinjaX = i; // Update ninja's X position
+                    NinjaY = j; // Update ninja's Y position
+                    map[NinjaX, NinjaY] = '@'; // Set new position
 
-                    NinjaGame.TrackPosition(_ninjaX, _ninjaY);
+                    NinjaGame.TrackPosition(NinjaX, NinjaY);
 
                     ThrowShuriken(map);
                     if (_holySymbolCounter == 0)
@@ -594,9 +632,16 @@ internal class Ninja
                         throw new Exception("LOOP");
                     }
 
-                    while (IsValidMove(_ninjaX, _ninjaY + 1, map))
+                    while (IsValidMove(NinjaX, NinjaY + 1, map))
                     {
-                        MovePlayer(_ninjaX, _ninjaY + 1, map);
+                        if (Bomb.IsBomb)//check if there is bomb on map otherwise we dont need to hit this code
+                        {
+                            bomb.CheckBombAndTriggerCountdown(NinjaX, NinjaY, Bomb.bombDics);//Checks if ninja is next to bomb
+                            bomb.BombCountDownAndExplode(NinjaX, NinjaY, map);
+                            NinjaGame.PrintMap();
+                        }
+
+                        MoveNinja(NinjaX, NinjaY + 1, map);
                         NinjaGame.PrintMap();
 
                         if (_currDir != 'E')
@@ -612,7 +657,7 @@ internal class Ninja
         }
     }
 
-    public void MoveSouth(int currX, int currY, char[,] map)
+    private void MoveSouth(int currX, int currY, char[,] map)
     {
         for (int i = 0; i < map.GetLength(0); i++)
         {
@@ -622,16 +667,14 @@ internal class Ninja
                 {
                     _currDir = 'S';
 
-                    if (_prevDirChange != '\0')// need to check if prevDirChange was not empty. we want to make sure to keep the original position
-                        map[_ninjaX, _ninjaY] = _prevDirChange;
-                    else
-                        map[_ninjaX, _ninjaY] = ' '; // Clear old position
-                    _prevDirChange = map[i, j];
-                    _ninjaX = i; // Update player's X position
-                    _ninjaY = j; // Update player's Y position
-                    map[_ninjaX, _ninjaY] = '@'; // Set new position
+                    ClearOutPreviousPositions(map);
 
-                    NinjaGame.TrackPosition(_ninjaX, _ninjaY);
+                    _prevDirChange = map[i, j];
+                    NinjaX = i; // Update ninja's X position
+                    NinjaY = j; // Update ninja's Y position
+                    map[NinjaX, NinjaY] = '@'; // Set new position
+
+                    NinjaGame.TrackPosition(NinjaX, NinjaY);
 
                     ThrowShuriken(map);
                     if (_holySymbolCounter == 0)
@@ -646,9 +689,16 @@ internal class Ninja
                         throw new Exception("LOOP");
                     }
 
-                    while (IsValidMove(_ninjaX + 1, _ninjaY, map))
+                    while (IsValidMove(NinjaX + 1, NinjaY, map))
                     {
-                        MovePlayer(_ninjaX + 1, _ninjaY, map);
+                        if (Bomb.IsBomb)//check if there is bomb on map otherwise we dont need to hit this code
+                        {
+                            bomb.CheckBombAndTriggerCountdown(NinjaX, NinjaY, Bomb.bombDics);//Checks if ninja is next to bomb
+                            bomb.BombCountDownAndExplode(NinjaX, NinjaY, map);
+                            NinjaGame.PrintMap();
+                        }
+
+                        MoveNinja(NinjaX + 1, NinjaY, map);
                         NinjaGame.PrintMap();
 
                         if (_currDir != 'S')
@@ -664,7 +714,7 @@ internal class Ninja
         }
     }
 
-    public void MoveNorth(int currX, int currY, char[,] map)
+    private void MoveNorth(int currX, int currY, char[,] map)
     {
         for (int i = 0; i < map.GetLength(0); i++)
         {
@@ -674,17 +724,14 @@ internal class Ninja
                 {
                     _currDir = 'N';
 
-                    if (_prevDirChange != '\0')// need to check if prevDirChange was not empty. we want to make sure to keep the original position
-                        map[_ninjaX, _ninjaY] = _prevDirChange;
-                    else
-                        map[_ninjaX, _ninjaY] = ' '; // Clear old position
+                    ClearOutPreviousPositions(map);
 
                     _prevDirChange = map[i, j];
-                    _ninjaX = i; // Update player's X position
-                    _ninjaY = j; // Update player's Y position
-                    map[_ninjaX, _ninjaY] = '@'; // Set new position
+                    NinjaX = i; // Update ninja's X position
+                    NinjaY = j; // Update ninja's Y position
+                    map[NinjaX, NinjaY] = '@'; // Set new position
 
-                    NinjaGame.TrackPosition(_ninjaX, _ninjaY);
+                    NinjaGame.TrackPosition(NinjaX, NinjaY);
 
                     ThrowShuriken(map);
                     if (_holySymbolCounter == 0)
@@ -699,9 +746,17 @@ internal class Ninja
                         throw new Exception("LOOP");
                     }
 
-                    while (IsValidMove(_ninjaX - 1, _ninjaY, map))
+                    while (IsValidMove(NinjaX - 1, NinjaY, map))
                     {
-                        MovePlayer(_ninjaX - 1, _ninjaY, map);
+                        NinjaGame.PrintMap();
+                        //check if there is bomb on map otherwise we dont need to hit this code
+                        if (Bomb.IsBomb)
+                        {
+                            bomb.CheckBombAndTriggerCountdown(NinjaX, NinjaY, Bomb.bombDics);//Checks if ninja is next to bomb
+                            bomb.BombCountDownAndExplode(NinjaX, NinjaY, map);
+                            NinjaGame.PrintMap();
+                        }
+                        MoveNinja(NinjaX - 1, NinjaY, map);
                         NinjaGame.PrintMap();
 
                         if (_currDir != 'N')
@@ -717,7 +772,7 @@ internal class Ninja
         }
     }
 
-    public void SecretPath(int currX, int currY, char[,] map)
+    private void SecretPath(int currX, int currY, char[,] map)
     {
         // Find the other matching path to move to
         for (int i = 0; i < map.GetLength(0); i++)
@@ -727,28 +782,22 @@ internal class Ninja
                 if ((map[i, j] == 'F' || map[i, j] == 'G' || map[i, j] == 'H' || map[i, j] == 'I' || map[i, j] == 'J'
                     || map[i, j] == 'K' || map[i, j] == 'L') && (i != currX || j != currY) && (map[currX, currY] == map[i, j]))
                 {
-                    if (_prevSecretPath != '\0')// need to check if prevSecretPath was not empty. we want to make sure to keep the original position of the path
-                        map[_ninjaX, _ninjaY] = _prevSecretPath;
-                    else if (_prevDirChange != '\0')
-                    {
-                        map[_ninjaX, _ninjaY] = _prevDirChange;
-                        _prevDirChange = '\0';
-                    }
-                    else
-                        map[_ninjaX, _ninjaY] = ' '; // Clear old position
+
+                    ClearOutPreviousPositions(map);
 
                     _prevSecretPath = map[i, j];
-                    _ninjaX = i; // Update player's X position
-                    _ninjaY = j; // Update player's Y position
-                    map[_ninjaX, _ninjaY] = '@'; // Set new position
-                    NinjaGame.TrackPosition(_ninjaX, _ninjaY);
+                    NinjaX = i; // Update ninja's X position
+                    NinjaY = j; // Update ninja's Y position
+                    map[NinjaX, NinjaY] = '@'; // Set new position
+                    NinjaGame.TrackPosition(NinjaX, NinjaY);
+                    NinjaGame.PrintMap();
                     return; // Exit once we move
                 }
             }
         }
     }
 
-    public void Mirror(int currX, int currY, char[,] map)
+    private void Mirror(int currX, int currY, char[,] map)
     {
         for (int i = 0; i < map.GetLength(0); i++)
         {
@@ -761,29 +810,21 @@ internal class Ninja
                     else
                         _isMirrored = true;
 
-                    if (_prevMirror != '\0')// need to check if prevSecretPath was not empty. we want to make sure to keep the original position of the path
-                        map[_ninjaX, _ninjaY] = _prevMirror;
-                    else if (_prevSecretPath != '\0')
-                    {
-                        map[_ninjaX, _ninjaY] = _prevSecretPath;
-                        _prevSecretPath = '\0';
-                    }
-                    else
-                        map[_ninjaX, _ninjaY] = ' '; // Clear old position
+                    ClearOutPreviousPositions(map);
 
                     _prevMirror = map[i, j];
-                    _ninjaX = i; // Update player's X position
-                    _ninjaY = j; // Update player's Y position
-                    map[_ninjaX, _ninjaY] = '@'; // Set new position
-                    NinjaGame.TrackPosition(_ninjaX, _ninjaY);
-
+                    NinjaX = i; // Update ninja's X position
+                    NinjaY = j; // Update ninja's Y position
+                    map[NinjaX, NinjaY] = '@'; // Set new position
+                    NinjaGame.TrackPosition(NinjaX, NinjaY);
+                    NinjaGame.PrintMap();
                     return;
                 }
             }
         }
     }
 
-    public void BreakerMode(int currX, int currY, char[,] map)
+    private void BreakerMode(int currX, int currY, char[,] map)
     {
         for (int i = 0; i < map.GetLength(0); i++)
         {
@@ -802,32 +843,66 @@ internal class Ninja
                         NinjaGame.AddMessage("In BreakerMode");
                     }
 
-                    if (_prevDirChange != '\0')
-                    {
-                        map[_ninjaX, _ninjaY] = _prevDirChange;
-                        _prevDirChange = '\0';
-                    }
-                    else if (_prevSecretPath != '\0')
-                    {
-                        map[_ninjaX, _ninjaY] = _prevSecretPath;
-                        _prevSecretPath = '\0';
-                    }
-                    else if (_prevMirror != '\0')
-                    {
-                        map[_ninjaX, _ninjaY] = _prevMirror;
-                        _prevMirror = '\0';
-                    }
-                    else
-                        map[_ninjaX, _ninjaY] = ' ';
+                    ClearOutPreviousPositions(map);
 
-                    _ninjaX = i; // Update player's X position
-                    _ninjaY = j; // Update player's Y position
-                    map[_ninjaX, _ninjaY] = '@'; // Set new position
+                    NinjaX = i; // Update ninja's X position
+                    NinjaY = j; // Update ninja's Y position
+                    map[NinjaX, NinjaY] = '@'; // Set new position
 
                     return;
                 }
             }
+        }        
+    }
+
+    private void BombLocation(int currX, int currY, char[,] map)
+    {
+        for (int i = 0; i < map.GetLength(0); i++)
+        {
+            for (int j = 0; j < map.GetLength(1); j++)
+            {
+                if ((map[i, j] >= '1' && map[i, j] <= '9') && (i == currX && j == currY))
+                {
+
+                    ClearOutPreviousPositions(map);
+
+                    _prevBomb = map[i, j];
+                    NinjaX = i; // Update ninja's X position
+                    NinjaY = j; // Update ninja's Y position
+                    map[NinjaX, NinjaY] = '@'; // Set new position
+                    NinjaGame.PrintMap();
+                    return;
+                }
+            }
         }
+    }
+
+    private void ClearOutPreviousPositions(char[,] map)
+    {
+        if (_prevDirChange != '\0')
+        {
+            map[NinjaX, NinjaY] = _prevDirChange;
+            _prevDirChange = '\0';
+        }
+        else if (_prevSecretPath != '\0')
+        {
+            map[NinjaX, NinjaY] = _prevSecretPath;
+            _prevSecretPath = '\0';
+        }
+        else if (_prevMirror != '\0')
+        {
+            map[NinjaX, NinjaY] = _prevMirror;
+            _prevMirror = '\0';
+        }
+        else if (_prevBomb != '\0')
+        {
+            map[NinjaX, NinjaY] = _prevBomb;
+            _prevBomb = '\0';
+        }
+        else
+            map[NinjaX, NinjaY] = ' ';
+
+        NinjaGame.PrintMap();
     }
 }
 

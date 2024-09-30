@@ -2,7 +2,6 @@
 using System.Reflection.Metadata.Ecma335;
 using System.Text.RegularExpressions;
 
-
 class NinjaGame
 {   
     //globals
@@ -10,14 +9,15 @@ class NinjaGame
     static int _mapWidth;
     static int _mapHeight = 0;
     static int _messageLine = 0;
-    static char[] _validMapCharacters = { '@', '$', '#', 'X', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'S', 'E', 'N', 'W', 'M', 'B', '*',' ' };
+    static char[] _validMapCharacters = { '@', '$', '#', 'X', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'S', 'E', 'N', 'W', 'M', 'B', '*',' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
     static Queue<(int, int)> _recentPositions = new Queue<(int, int)>();
     static int _maxRecentPositions = 100;
-    static List<char> _secretPathList = new List<char>();
+    static List<char> _secretPathList = new List<char>();    
     
     static void Main(string[] args)
     { //we will use the main loop to call the actual game to keep the Main() method clean
-        Ninja ninja = new Ninja(0,0);
+        Bomb bomb = new Bomb(0, 0);
+        Ninja ninja = new Ninja(0,0, bomb);
         Dictionary<char, string> nameDic = new Dictionary<char, string>();
         nameDic.Add('A', "ka");
         nameDic.Add('B', "zu");
@@ -103,7 +103,7 @@ class NinjaGame
 
         try
         {
-            Load_map("map2.txt", ninja);
+            Load_map("map4.txt", ninja);
             
             foreach(char path in _secretPathList)
             {
@@ -150,8 +150,8 @@ class NinjaGame
 
                 if (currentChar == '@')
                 {
-                    ninja._ninjaX = i; // Store the row (i) where '@' is found
-                    ninja._ninjaY = j; // Store the column (j) where '@' is found
+                    ninja.NinjaX = i; // Store the row (i) where '@' is found
+                    ninja.NinjaY = j; // Store the column (j) where '@' is found
                     hasPlayerSymbol = true;
                 }
                 else if (currentChar == '$')
@@ -162,6 +162,11 @@ class NinjaGame
                 {
                     if(!_secretPathList.Contains(currentChar))
                         _secretPathList.Add(currentChar);
+                }
+                else if (currentChar == '1' || currentChar == '2' || currentChar == '3' || currentChar == '4' || currentChar == '5' || currentChar == '6' || currentChar == '7' || currentChar == '8' || currentChar == '9')
+                {
+                    Bomb.IsBomb = true;
+                    Bomb.bombDics.Add((i, j), (int.Parse(currentChar.ToString()), false));
                 }
             }
         }
@@ -233,11 +238,11 @@ class NinjaGame
                 PrintMap();
                 return;
             }
-            else if (ninja._shurikenCount == 0 && ninja._shurikensOnMap == 0 && ninja._holySymbolCounter > 1)
-            {
-                AddMessage("LOOP");
-                throw new Exception("LOOP");
-            }
+            //else if (ninja._shurikenCount == 0 && ninja._shurikensOnMap == 0 && ninja._holySymbolCounter > 1)
+            //{
+            //    AddMessage("LOOP");
+            //    throw new Exception("LOOP");
+            //}
 
             ninja.Movement(_map);
             if (LoopingCheck())
