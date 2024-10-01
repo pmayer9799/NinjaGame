@@ -7,17 +7,19 @@ class NinjaGame
     //globals
     static char[,] _map;
     static int _mapWidth;
-    static int _mapHeight = 0;
+    static int _mapHeight;
     static int _messageLine = 0;
     static char[] _validMapCharacters = { '@', '$', '#', 'X', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'S', 'E', 'N', 'W', 'M', 'B', '*',' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
     static Queue<(int, int)> _recentPositions = new Queue<(int, int)>();
     static int _maxRecentPositions = 100;
-    static List<char> _secretPathList = new List<char>();    
-    
-    static void Main(string[] args)
-    { //we will use the main loop to call the actual game to keep the Main() method clean
-        Bomb bomb = new Bomb(0, 0);
-        Ninja ninja = new Ninja(0,0, bomb);
+    static List<char> _secretPathList = new List<char>();
+
+    public static void Main(string[] args)
+    { 
+        var messageManager = new MessageManager();
+        Bomb bomb = new Bomb(0, 0, messageManager);
+        Ninja ninja = new Ninja(0, 0, 3, bomb, messageManager);
+        
         Dictionary<char, string> nameDic = new Dictionary<char, string>();
         nameDic.Add('A', "ka");
         nameDic.Add('B', "zu");
@@ -114,10 +116,10 @@ class NinjaGame
                 else
                     throw new Exception($"Incorrect amount of a secret path. Must have 2. Path: {path}");
             }
-            
-            _messageLine = _mapHeight;
 
-            GameLoop(ninja);
+            messageManager.messageLine = _mapHeight;            
+
+            GameLoop(ninja, messageManager);
         }
         catch (Exception ex)
         {
@@ -155,9 +157,7 @@ class NinjaGame
                     hasPlayerSymbol = true;
                 }
                 else if (currentChar == '$')
-                    ninja._holySymbolCounter++;                    
-                else if (currentChar == '*')
-                    ninja._shurikensOnMap++;
+                    ninja.HolySymbolCounter++;
                 else if (currentChar == 'F' || currentChar == 'G' || currentChar == 'H' || currentChar == 'i' || currentChar == 'J' || currentChar == 'K' || currentChar == 'L')
                 {
                     if(!_secretPathList.Contains(currentChar))
@@ -225,29 +225,25 @@ class NinjaGame
         return true;
     }    
 
-    static void GameLoop(Ninja ninja)
+    static void GameLoop(Ninja ninja, MessageManager messageManager)
     {        
-        while (ninja._holySymbolCounter > 0)
+        while (ninja.HolySymbolCounter > 0)
         {
             PrintMap();//need to print map after each change
             ninja.ThrowShuriken(_map);//we always have the option to throw shuriken if we have any
             PrintMap();
-            if (ninja._holySymbolCounter == 0)
+
+            if (ninja.HolySymbolCounter == 0)
             {
-                AddMessage("All holy symbols destroyed");
+                messageManager.AddMessage("All holy symbols destroyed");
                 PrintMap();
                 return;
             }
-            //else if (ninja._shurikenCount == 0 && ninja._shurikensOnMap == 0 && ninja._holySymbolCounter > 1)
-            //{
-            //    AddMessage("LOOP");
-            //    throw new Exception("LOOP");
-            //}
 
             ninja.Movement(_map);
             if (LoopingCheck())
             {
-                AddMessage("LOOP");
+                messageManager.AddMessage("LOOP");
                 throw new Exception("LOOP");
             }
         }        
@@ -264,14 +260,7 @@ class NinjaGame
             }
             Console.WriteLine();
         }
-    }    
-
-    public static void AddMessage(string message)
-    {
-        Console.SetCursorPosition(0, _messageLine);
-        Console.WriteLine(message);
-        _messageLine++;
-    }
+    }  
 
     static string CapitalizeFirstLetter(string name)
     {

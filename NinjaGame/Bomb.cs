@@ -9,13 +9,17 @@ public class Bomb
 {
     public int BombX { get; set; }
     public int BombY { get; set; }
+
     public static bool IsBomb = false;
 
     public static Dictionary<(int, int), (int bombCountDown, bool isArmed)> bombDics = new Dictionary<(int, int), (int, bool)>();
-    public Bomb(int startX, int startY)
+
+    private MessageManager messageManager;
+    public Bomb(int startX, int startY, MessageManager messageManager)
     {
         BombX = startX;
         BombY = startY;
+        this.messageManager = messageManager;
     }
 
     public void CheckBombAndTriggerCountdown(int currX, int currY, Dictionary<(int, int), (int countDown, bool isArmed)> bombDics)
@@ -29,7 +33,7 @@ public class Bomb
             {
                 if (!bombData.isArmed)
                 {
-                    NinjaGame.AddMessage("Bomb is active");
+                    messageManager.AddMessage("Bomb is active");
                     bombDics[bombPosition] = (bombData.countDown, true);
                 }
             }
@@ -60,7 +64,7 @@ public class Bomb
                 if(bombData.bombCountDown == 0)
                 {
                     Explode(ninjaX, ninjaY, bombPosition, bombData, map);
-                    NinjaGame.AddMessage("Bomb(s) exploded!");
+                    messageManager.AddMessage("Bomb(s) exploded!");
                 }
             }
         }
@@ -82,7 +86,7 @@ public class Bomb
 
         if (ninjaX == bombX && ninjaY == bombY)
         {
-            NinjaGame.AddMessage("Ninja destroyed by bomb!");
+            messageManager.AddMessage("Ninja destroyed by bomb!");
             throw new Exception("Ninja destroyed by bomb!");
         }
 
@@ -100,7 +104,7 @@ public class Bomb
             if (!CheckPosition(ninjaX, ninjaY, bombPosition.Item1 - i, bombPosition.Item2, map))
                 break;
         }
-        NinjaGame.PrintMap();
+
         for (int i = 1; i <= radius; i++)
         {
             if (!CheckPosition(ninjaX, ninjaY, bombPosition.Item1 + i, bombPosition.Item2, map))
